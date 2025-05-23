@@ -62,6 +62,8 @@ in
     dontUnpack = "true";
     buildInputs = [
       virtualenv
+      pkgs.uv # optional; not required to just run python code
+      python # for running uv
     ];
 
     env =  {
