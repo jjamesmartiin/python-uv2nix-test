@@ -96,6 +96,7 @@ in
         do echo "declare -x $var=\"''${!var}\""
         done
         echo "declare -x PS1='\n\033[1;32m[nix-shell:\w]\$\033[0m '"
+        echo "eval \"$shellHook\""
         echo "exec \"$SHELL\" --norc --noprofile \"\$@\""
       } > "$out"
 
@@ -107,7 +108,6 @@ in
       echo "$motd"
       if [ -d .venv ]
       then
-        echo
         echo "Warning: .venv/ exists and can be removed."
       fi
     '';
