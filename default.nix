@@ -2,7 +2,7 @@
 # loaded.
 
 let
-  # nixos-24.11 from 2024-12-29:
+  ### nixos-24.11 from 2024-12-29:
   nixpkgs = fetchTarball {
     name = "nixpkgs";
     url = "https://github.com/NixOS/nixpkgs/archive/d49da4c0.tar.gz";
@@ -10,8 +10,12 @@ let
   };
 
   pkgs = import nixpkgs {};
-
   lib = pkgs.lib;
+
+  # Supposedly cargo does not work on 314 so stick to 313.
+  python = pkgs.python313;
+
+  ### Get the latest versions of uv2nix and dependencies from 2025-05-22:
 
   pyproject-nix = import (fetchTarball {
     name = "pyproject.nix";
@@ -35,7 +39,7 @@ let
     inherit pyproject-nix uv2nix lib;
   };
 
-  python = pkgs.python313; # cargo does not work on 314
+  ### Required setup for a venv with uv2nix
 
   workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
 
@@ -72,12 +76,19 @@ in
       LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
     };
 
-    # prevent nixpkgs from being garbage-collected
+    # Prevent nixpkgs from being garbage-collected when building a
+    # permanent shell.
     inherit nixpkgs;
+
+    motd = ''
+      This is a uv2nix shell with Python ${python.version}.
+      You can also run `nix-shell -A uv` to get uv by itself.
+      Run binaries with `python hello.py`.
+      To build a permanent shell, run `nix-build`.'';
 
     builder = builtins.toFile "builder.sh" ''
       source $stdenv/setup
-      eval $shellHook
+      eval "$shellHook"
 
       {
         echo "#!$SHELL"
@@ -90,4 +101,26 @@ in
 
       chmod a+x "$out"
     '';
+
+    shellHook = ''
+      echo
+      echo "$motd"
+      if [ -d .venv ]
+      then
+        echo
+        echo "Warning: .venv/ exists and can be removed."
+      fi
+    '';
+
+  } //
+  {
+    # Run with `nix-shell -A uv` to get a shell with uv and python,
+    # to install and upgrade packages when the main shell is broken.
+    uv =
+      pkgs.mkShell {
+        packages = [
+          pkgs.uv
+          python
+        ];
+      };
   }
