@@ -13,14 +13,18 @@ let
 
   lib = pkgs.lib;
 
-  pyproject-nix = import (builtins.fetchGit {
-    url = "https://github.com/pyproject-nix/pyproject.nix.git";
+  pyproject-nix = import (fetchTarball {
+    name = "pyproject.nix";
+    url = "https://github.com/pyproject-nix/pyproject.nix/archive/e09c10c.tar.gz";
+    sha256 = "sha256:10ql65kmw8zvdrcaj9q4nbzrh5v7gry56ylvqcmw52avv8c4f5s3";
   }) {
     inherit lib;
   };
 
-  uv2nix = import (builtins.fetchGit {
-    url = "https://github.com/pyproject-nix/uv2nix.git";
+  uv2nix = import (fetchTarball {
+    name = "";
+    url = "https://github.com/pyproject-nix/uv2nix/archive/ec05022.tar.gz";
+    sha256 = "sha256:0gc20q097zrixxcnpik7bxiv11k5qwc42rki1p3jnl5hfca15zyn";
   }) {
     inherit pyproject-nix lib;
   };
