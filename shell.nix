@@ -1,7 +1,5 @@
-# This is supposed to use uv2nix to open a shell with all the uv
-# packages already loaded. But it doesn't work right now since it
-# thinks "python-test" is a package to load. I think I need some kind
-# of "override" to make it work properly.
+# This uses uv2nix to open a shell with all the uv packages already
+# loaded.
 
 let
   # nixos-24.11 from 2024-12-29:
@@ -35,13 +33,21 @@ let
 
   python = pkgs.python313; # cargo does not work on 314
 
+  workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
+
+  uvLockedOverlay = workspace.mkPyprojectOverlay {
+    sourcePreference = "wheel";
+  };
+
   pythonSet =
     # Use base package set from pyproject.nix builders
     (pkgs.callPackage pyproject-nix.build.packages {
       inherit python;
-    });
-
-  workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
+    })
+      .overrideScope (pkgs.lib.composeManyExtensions [
+        pyproject-build-systems.default
+        uvLockedOverlay
+      ]);
 
   virtualenv = pythonSet.mkVirtualEnv "python-test" workspace.deps.all;
 
@@ -51,8 +57,6 @@ in
     name = "shell";
     dontUnpack = "true";
     buildInputs = [
-      python
-      pkgs.uv
       virtualenv
     ];
 
