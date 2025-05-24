@@ -49,7 +49,7 @@ let
 
   ### Required setup for a venv with uv2nix
 
-  # Set up a "workspace" that only includes pyproject.tom and uv.lock.
+  # Set up a "workspace" that only includes pyproject.toml and uv.lock.
   workspace = uv2nix.lib.workspace.loadWorkspace {
     workspaceRoot = lib.sources.sourceByRegex ./. ["pyproject.toml" "uv.lock"];
   };
