@@ -1,5 +1,11 @@
 # This uses uv2nix to open a shell with all the uv packages already
 # loaded.
+#
+# Run nix-shell, then you can execute scripts with e.g. `python
+# hello.py`. To build a permanent shell, run `nix-build -o shell`.
+#
+# You can run `nix-shell -A uv` to get uv by itself, for example if
+# the uv2nix shell is broken.
 
 let
   ### nixos-24.11 from 2024-12-29:
@@ -26,15 +32,17 @@ let
   };
 
   uv2nix = import (fetchTarball {
-    name = "";
+    name = "uv2nix";
     url = "https://github.com/pyproject-nix/uv2nix/archive/ec05022.tar.gz";
     sha256 = "sha256:0gc20q097zrixxcnpik7bxiv11k5qwc42rki1p3jnl5hfca15zyn";
   }) {
     inherit pyproject-nix lib;
   };
 
-  pyproject-build-systems = import (builtins.fetchGit {
-    url = "https://github.com/pyproject-nix/build-system-pkgs.git";
+  pyproject-build-systems = import (fetchTarball {
+    name = "project-build-systems";
+    url = "https://github.com/pyproject-nix/build-system-pkgs/archive/7dba6db.tar.gz";
+    sha256 = "sha256:0xcy3adpvi0csmfvs4ic1wl4i6ak7bqqxqg8l158h6v3ap0i4awz";
   }) {
     inherit pyproject-nix uv2nix lib;
   };
@@ -83,15 +91,8 @@ in
     # permanent shell.
     inherit nixpkgs;
 
-    motd = ''
-      This is a uv2nix shell with Python ${python.version}.
-      You can also run `nix-shell -A uv` to get uv by itself.
-      Run binaries with `python hello.py`.
-      To build a permanent shell, run `nix-build`.'';
-
     builder = builtins.toFile "builder.sh" ''
       source $stdenv/setup
-      eval "$shellHook"
 
       {
         echo "#!$SHELL"
@@ -105,16 +106,6 @@ in
 
       chmod a+x "$out"
     '';
-
-    shellHook = ''
-      echo
-      echo "$motd"
-      if [ -d .venv ]
-      then
-        echo "Warning: .venv/ exists and can be removed."
-      fi
-    '';
-
   } //
   {
     # Run with `nix-shell -A uv` to get a shell with uv and python,
