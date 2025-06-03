@@ -19,7 +19,19 @@ let
   lib = pkgs.lib;
 
   # Supposedly cargo does not work on 314 so stick to 313.
-  python = pkgs.python313;
+  # python = pkgs.python313;
+  # python = pkgs.python313.override {
+  #   self = python;
+  #   packageOverrides = pyfinal: pyprev: {
+
+  #   };
+  # };
+  python = (pkgs.python313.withPackages (p: [
+    p.yfinance
+  ])) // {
+    version = pkgs.python313.version;
+    pname = pkgs.python313.pname;
+  };
 
   ### Get the latest versions of uv2nix and dependencies from 2025-05-22:
 
@@ -62,6 +74,7 @@ let
     # Use base package set from pyproject.nix builders
     (pkgs.callPackage pyproject-nix.build.packages {
       inherit python;
+      # try using python modules
     })
       .overrideScope (pkgs.lib.composeManyExtensions [
         pyproject-build-systems.default
@@ -77,8 +90,10 @@ in
     dontUnpack = "true";
     buildInputs = [
       virtualenv
-      pkgs.uv # optional; not required to just run python code
-      python # for running uv
+      # pkgs.uv # optional; not required to just run python code
+      # python # for running uv
+
+      # pkgs.python312Packages.yfinance # try
     ];
 
     env =  {
